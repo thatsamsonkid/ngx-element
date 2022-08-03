@@ -8,7 +8,7 @@ Thanks to [Bruno Bradach](https://github.com/brunob15) for creating this version
 
 My only contribution here is only in updating dependencies for use in newer angular projects.
 
-# NgxElement
+# Ngx-El (A.K.A NgxElement)
 
 NgxElement enables to lazy load Angular components in non-angular applications.
 The library will register a custom element to which you can pass an attribute to specify what component you want to load.
@@ -26,7 +26,7 @@ $ ng add @angular/elements
 ## Installing the library
 
 ```
-$ npm install ngx-element --save
+$ npm install ngx-el --save
 ```
 
 ## Usage
