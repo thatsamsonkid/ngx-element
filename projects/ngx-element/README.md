@@ -1,5 +1,12 @@
-[![npm version](https://badge.fury.io/js/ngx-element.svg)](https://badge.fury.io/js/ngx-element)
-![Tests CI](https://github.com/brunob15/ngx-element/workflows/Tests%20CI/badge.svg)
+# Credits
+
+Thanks to [Juri Strumpflohner](https://github.com/juristr) and [ngx-lazy-el](https://github.com/juristr/ngx-lazy-el)!
+
+Thanks to [Bruno Bradach](https://github.com/brunob15) for creating this version of Juri's implementation for use in non-angular applications.
+
+# Disclaimer
+
+My only contribution here is only in updating dependencies for use in newer angular projects.
 
 # NgxElement
 
@@ -9,17 +16,21 @@ The library will register a custom element to which you can pass an attribute to
 It's a great way to use Angular in your CMS platform in an efficient manner.
 
 ## Install Angular Elements
+
 This library depends on Angular Elements. You can install it by running:
+
 ```
 $ ng add @angular/elements
 ```
 
 ## Installing the library
+
 ```
-$ npm install ngx-element
+$ npm install ngx-element --save
 ```
 
 ## Usage
+
 ### 1) Configure the Module containing the lazy loaded component
 
 First of all, expose the Angular Component that should be loaded via a customElementComponent property.
@@ -39,6 +50,7 @@ export class TalkModule {
 ```
 
 ### 2) Define the lazy component map in your AppModule
+
 Just like with the Angular Router, define the map of component selector and lazy module.
 
 ```
@@ -64,6 +76,7 @@ export class AppModule {
 ```
 
 ### 3) Use the lazy loaded component
+
 You can load your Angular component by adding an `<ngx-element>` tag to the DOM in your non-angular application like follows:
 
 ```
@@ -76,6 +89,7 @@ You can load your Angular component by adding an `<ngx-element>` tag to the DOM 
 ```
 
 ### 4) Listen to events
+
 You can listen to events emitted by Angular components.
 
 Add an `@Output` event to your component:
