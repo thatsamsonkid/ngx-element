@@ -2,11 +2,11 @@
 
 Thanks to [Juri Strumpflohner](https://github.com/juristr) and [ngx-lazy-el](https://github.com/juristr/ngx-lazy-el)!
 
-Thanks to [Bruno Bradach](https://github.com/brunob15) for creating this version of Juri's implementation for use in non-angular applications.
+Thanks to [Bruno Bradach](https://github.com/brunob15) for creating this version of Juri's implementation [ngx-element](https://github.com/brunob15/ngx-element) for use in non-angular applications.
 
 # Disclaimer
 
-My only contribution here is only in updating dependencies for use in newer angular projects.
+This package is a fork of [ngx-element](https://github.com/brunob15/ngx-element) and my only contribution here is only in updating the project for use in newer angular projects.
 
 # Ngx-El (A.K.A NgxElement)
 
