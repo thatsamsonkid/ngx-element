@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="100" viewBox="0 0 220 100" role="img" aria-label="JetBrains">
+  <rect width="220" height="100" fill="#000"/>
+  <rect x="16" y="16" width="48" height="48" fill="#fff"/>
+  <text x="24" y="50" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#000">JB</text>
+  <text x="76" y="48" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#fff">JetBrains</text>
+</svg>
