@@ -1,12 +1,11 @@
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { provideZoneChangeDetection } from '@angular/core';
+import { createApplication } from '@angular/platform-browser';
+import { provideNgxElement } from 'ngx-element';
+import { lazyConfig } from './app/lazy-config';
 
-import { AppModule } from './app/app.module';
-import { environment } from './environments/environment';
-
-if (environment.production) {
-  enableProdMode();
-}
-
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.error(err));
+createApplication({
+  providers: [
+    provideZoneChangeDetection(),
+    provideNgxElement(lazyConfig)
+  ]
+}).catch((err) => console.error(err));

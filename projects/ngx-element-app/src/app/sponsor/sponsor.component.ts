@@ -1,17 +1,12 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-sponsor',
+  standalone: true,
   templateUrl: './sponsor.component.html',
-  styleUrls: ['./sponsor.component.scss']
+  styleUrl: './sponsor.component.scss'
 })
-export class SponsorComponent implements OnInit {
-  @Input() image: string;
-  @Input() name: string;
-
-  constructor() { }
-
-  ngOnInit() {
-  }
-
+export class SponsorComponent {
+  @Input() image = '';
+  @Input() name = '';
 }

@@ -1,6 +1,6 @@
 {
   "name": "ngx-el",
-  "version": "12.0.2",
+  "version": "22.0.0",
   "description": "A simple way to lazy load Angular components in non-angular projects",
   "author": "Bruno Bradach",
   "contributors": [
@@ -23,15 +23,16 @@
     "angular elements",
     "web components",
     "lazy loading",
+    "standalone",
     "non-angular"
   ],
-  "licence": "MIT",
+  "license": "MIT",
   "dependencies": {
-    "tslib": "^2.0.0"
+    "tslib": "^2.8.0"
   },
   "peerDependencies": {
-    "@angular/common": "^12.2.16",
-    "@angular/core": "^12.2.16",
-    "@angular/elements": "^12.2.16"
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "@angular/elements": "^22.0.0"
   }
 }

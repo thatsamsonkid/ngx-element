@@ -1,30 +1,20 @@
 import { NgModule, Injector, ModuleWithProviders } from '@angular/core';
-import { createCustomElement } from '@angular/elements';
 import { NgxElementComponent } from './ngx-element.component';
-import { LAZY_CMPS_PATH_TOKEN } from './tokens';
+import { provideNgxElement, registerNgxElement } from './ngx-element.providers';
+import { LazyComponentDef } from './tokens';
 
 @NgModule({
-  declarations: [NgxElementComponent],
-  entryComponents: [NgxElementComponent]
+  imports: [NgxElementComponent]
 })
 export class NgxElementModule {
-
-  constructor(private injector: Injector) {
-    const ngxElement = createCustomElement(NgxElementComponent, { injector });
-    customElements.define('ngx-element', ngxElement);
+  constructor(injector: Injector) {
+    registerNgxElement(injector);
   }
 
-  static forRoot(modulePaths: any[]): ModuleWithProviders<NgxElementModule> {
+  static forRoot(config: LazyComponentDef[]): ModuleWithProviders<NgxElementModule> {
     return {
       ngModule: NgxElementModule,
-      providers: [
-        {
-          provide: LAZY_CMPS_PATH_TOKEN,
-          useValue: modulePaths
-        }
-      ]
+      providers: [provideNgxElement(config)]
     };
   }
-
-  ngDoBootstrap() {}
 }

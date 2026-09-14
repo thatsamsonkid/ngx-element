@@ -1,149 +1,153 @@
-import { Injectable, Inject, NgModuleFactory, Type, Compiler, Injector, ComponentFactoryResolver } from '@angular/core';
+import {
+  Injectable,
+  Inject,
+  Type,
+  EnvironmentInjector,
+  createNgModule,
+  reflectComponentType
+} from '@angular/core';
+import { Observable, from } from 'rxjs';
 import { LAZY_CMPS_PATH_TOKEN, LazyComponentDef } from './tokens';
 import { LazyCmpLoadedEvent } from './lazy-component-loaded-event';
-import { Observable, from } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NgxElementService {
-  private componentsToLoad: Map<string, LazyComponentDef>;
-  private loadedComponents = new Map<string, Type<any>>();
-  private elementsLoading = new Map<string, Promise<LazyCmpLoadedEvent>>();
-
-  injectors = new Map<Type<any>, Injector>();
-  componentFactoryResolvers = new Map<Type<any>, ComponentFactoryResolver>();
+  private readonly componentsToLoad: Map<string, LazyComponentDef>;
+  private readonly loadedComponents = new Map<string, Type<unknown>>();
+  private readonly elementsLoading = new Map<string, Promise<LazyCmpLoadedEvent>>();
+  private readonly injectors = new Map<Type<unknown>, EnvironmentInjector>();
 
   constructor(
-    @Inject(LAZY_CMPS_PATH_TOKEN)
-    modulePaths: {
-      selector: string
-    }[],
-    private compiler: Compiler,
-    private injector: Injector
+    @Inject(LAZY_CMPS_PATH_TOKEN) defs: LazyComponentDef[],
+    private readonly injector: EnvironmentInjector
   ) {
-    const ELEMENT_MODULE_PATHS = new Map<string, any>();
-    modulePaths.forEach(route => {
-      ELEMENT_MODULE_PATHS.set(route.selector, route);
-    });
-
-    this.componentsToLoad = ELEMENT_MODULE_PATHS;
+    this.componentsToLoad = new Map(defs.map((def) => [def.selector, def]));
   }
 
-  receiveContext(component: Type<any>, injector: Injector) {
+  receiveContext(component: Type<unknown>, injector: EnvironmentInjector): void {
     this.injectors.set(component, injector);
-    this.componentFactoryResolvers.set(component, injector.get(ComponentFactoryResolver));
   }
 
-  getInjector(component: Type<any>): Injector {
+  getInjector(component: Type<unknown>): EnvironmentInjector | undefined {
     return this.injectors.get(component);
   }
 
-  getComponentFactoryResolver(component: Type<any>): ComponentFactoryResolver {
-    return this.componentFactoryResolvers.get(component);
-  }
-
-  getComponentsToLoad() {
+  getComponentsToLoad(): Map<string, LazyComponentDef> {
     return this.componentsToLoad;
   }
 
   getComponentToLoad(selector: string): Observable<LazyCmpLoadedEvent> {
-    // Returns observable that completes when the lazy module has been loaded.
-    const registered = this.loadComponent(selector);
-    return from(registered);
+    return from(this.loadComponent(selector));
   }
 
   /**
-   * Allows to lazy load a component given its selector.
-   * If the component selector has been registered, it's according module
-   * will be fetched lazily
-   * @param componentTag selector of the component to load
+   * Lazy-load a component by selector. Supports both NgModules (`loadChildren`)
+   * and standalone components (`loadComponent` or a component returned from `loadChildren`).
    */
   loadComponent(componentSelector: string): Promise<LazyCmpLoadedEvent> {
-    if (this.elementsLoading.has(componentSelector)) {
-      return this.elementsLoading.get(componentSelector);
+    const pending = this.elementsLoading.get(componentSelector);
+    if (pending) {
+      return pending;
     }
 
-    if (this.componentsToLoad.has(componentSelector)) {
-      const cmpRegistryEntry = this.componentsToLoad.get(componentSelector);
-      const path = cmpRegistryEntry.loadChildren;
-
-      const loadPromise = new Promise<LazyCmpLoadedEvent>((resolve, reject) => {
-        (path() as Promise<NgModuleFactory<any> | Type<any>>)
-          .then(elementModuleOrFactory => {
-            /**
-             * With View Engine, the NgModule factory is created and provided when loaded.
-             * With Ivy, only the NgModule class is provided loaded and must be compiled.
-             * This uses the same mechanism as the deprecated `SystemJsNgModuleLoader` in
-             * in `packages/core/src/linker/system_js_ng_module_factory_loader.ts`
-             * to pass on the NgModuleFactory, or compile the NgModule and return its NgModuleFactory.
-             */
-            if (elementModuleOrFactory instanceof NgModuleFactory) {
-              return elementModuleOrFactory;
-            } else {
-              try {
-                return this.compiler.compileModuleAsync(elementModuleOrFactory);
-              } catch (err) {
-                // return the error
-                reject(err);
-
-                // break the promise chain
-                throw err;
-              }
-            }
-          })
-          .then(moduleFactory => {
-              const elementModuleRef = moduleFactory.create(this.injector);
-              let componentClass;
-
-              if (typeof elementModuleRef.instance.customElementComponent === 'object') {
-                componentClass = elementModuleRef.instance.customElementComponent[componentSelector];
-
-                if (!componentClass) {
-                  // tslint:disable-next-line: no-string-throw
-                  throw `You specified multiple component elements in module ${elementModuleRef} but there was no match for tag
-                        ${componentSelector} in ${JSON.stringify(elementModuleRef.instance.customElementComponent)}.
-                         Make sure the selector in the module is aligned with the one specified in the lazy module definition.`;
-                }
-              } else {
-                componentClass = elementModuleRef.instance.customElementComponent;
-              }
-
-              // Register injector of the lazy module.
-              // This is needed to share the entryComponents between the lazy module and the application
-              const moduleInjector = elementModuleRef.injector;
-              this.receiveContext(componentClass, moduleInjector);
-
-              this.loadedComponents.set(componentSelector, componentClass);
-              this.elementsLoading.delete(componentSelector);
-              this.componentsToLoad.delete(componentSelector);
-
-              resolve({
-                selector: componentSelector,
-                componentClass
-              });
-          })
-          .catch(err => {
-            this.elementsLoading.delete(componentSelector);
-            return Promise.reject(err);
-          });
+    if (this.loadedComponents.has(componentSelector)) {
+      return Promise.resolve({
+        selector: componentSelector,
+        componentClass: this.loadedComponents.get(componentSelector)!
       });
+    }
 
-      this.elementsLoading.set(componentSelector, loadPromise);
-      return loadPromise;
-
-    } else if (this.loadedComponents.has(componentSelector)) {
-      // component already loaded
-      return new Promise(resolve => {
-        resolve({
-          selector: componentSelector,
-          componentClass: this.loadedComponents.get(componentSelector)
-        });
-      });
-    } else {
-      throw new Error(
-        `Unrecognized component "${componentSelector}". Make sure it is registered in the component registry`
+    if (!this.componentsToLoad.has(componentSelector)) {
+      return Promise.reject(
+        new Error(
+          `Unrecognized component "${componentSelector}". Make sure it is registered in the component registry`
+        )
       );
     }
+
+    const loadPromise = this.loadAndResolve(componentSelector);
+    this.elementsLoading.set(componentSelector, loadPromise);
+    return loadPromise;
+  }
+
+  private async loadAndResolve(componentSelector: string): Promise<LazyCmpLoadedEvent> {
+    try {
+      const def = this.componentsToLoad.get(componentSelector)!;
+      const loader = def.loadComponent ?? def.loadChildren;
+
+      if (!loader) {
+        throw new Error(
+          `Lazy definition for "${componentSelector}" must provide loadComponent or loadChildren`
+        );
+      }
+
+      const loaded = this.unwrapExport(await loader());
+      const componentClass = this.resolveComponentClass(loaded, componentSelector);
+
+      this.loadedComponents.set(componentSelector, componentClass);
+      this.componentsToLoad.delete(componentSelector);
+      this.elementsLoading.delete(componentSelector);
+
+      return { selector: componentSelector, componentClass };
+    } catch (err) {
+      this.elementsLoading.delete(componentSelector);
+      throw err;
+    }
+  }
+
+  private unwrapExport(loaded: unknown): Type<unknown> {
+    if (typeof loaded === 'function') {
+      return loaded as Type<unknown>;
+    }
+
+    if (loaded && typeof loaded === 'object' && 'default' in loaded) {
+      return (loaded as { default: Type<unknown> }).default;
+    }
+
+    throw new Error('Lazy loader must resolve to a component or NgModule class');
+  }
+
+  private resolveComponentClass(type: Type<unknown>, selector: string): Type<unknown> {
+    const mirror = reflectComponentType(type);
+    if (mirror) {
+      if (!mirror.isStandalone) {
+        throw new Error(
+          `Component "${selector}" is not standalone. Convert it to standalone or lazy-load an NgModule via loadChildren.`
+        );
+      }
+
+      this.receiveContext(type, this.injector);
+      return type;
+    }
+
+    const moduleRef = createNgModule(type, this.injector);
+    const custom = (moduleRef.instance as {
+      customElementComponent?: Type<unknown> | Record<string, Type<unknown>>;
+    }).customElementComponent;
+
+    if (!custom) {
+      throw new Error(
+        `NgModule ${type.name} must expose a customElementComponent property`
+      );
+    }
+
+    let componentClass: Type<unknown> | undefined;
+    if (typeof custom === 'object') {
+      componentClass = custom[selector];
+      if (!componentClass) {
+        throw new Error(
+          `You specified multiple component elements in module ${type.name} but there was no match for tag ` +
+            `"${selector}" in ${JSON.stringify(Object.keys(custom))}. ` +
+            `Make sure the selector in the module is aligned with the one specified in the lazy module definition.`
+        );
+      }
+    } else {
+      componentClass = custom;
+    }
+
+    this.receiveContext(componentClass, moduleRef.injector);
+    return componentClass;
   }
 }

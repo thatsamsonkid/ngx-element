@@ -15,6 +15,8 @@ The library will register a custom element to which you can pass an attribute to
 
 It's a great way to use Angular in your CMS platform in an efficient manner.
 
+Angular 22 supports **standalone bootstrap** via `createApplication` / `provideNgxElement`, and **lazy-loading standalone components** via `loadComponent`. NgModule-based `loadChildren` continues to work.
+
 ## Install Angular Elements
 
 This library depends on Angular Elements. You can install it by running:
@@ -31,46 +33,78 @@ $ npm install ngx-el --save
 
 ## Usage
 
-### 1) Configure the Module containing the lazy loaded component
+### Standalone bootstrap (recommended)
 
-First of all, expose the Angular Component that should be loaded via a customElementComponent property.
-
-```
-...
-@NgModule({
-  declarations: [TalkComponent],
-  ...
-  exports: [TalkComponent],
-  entryComponents: [TalkComponent]
-})
-export class TalkModule {
-  customElementComponent: Type<any> = TalkComponent;
-  ...
-}
-```
-
-### 2) Define the lazy component map in your AppModule
-
-Just like with the Angular Router, define the map of component selector and lazy module.
+Create the Angular application without a root component and register the lazy map. This is the standalone equivalent of an `AppModule` with an empty `ngDoBootstrap()`.
 
 ```
+import { provideZoneChangeDetection } from '@angular/core';
+import { createApplication } from '@angular/platform-browser';
+import { provideNgxElement } from 'ngx-element';
+
 const lazyConfig = [
   {
     selector: 'talk',
     loadChildren: () => import('./talk/talk.module').then(m => m.TalkModule)
+  },
+  {
+    selector: 'sponsor',
+    loadComponent: () => import('./sponsor/sponsor.component').then(c => c.SponsorComponent)
   }
 ];
 
+createApplication({
+  providers: [
+    provideZoneChangeDetection(),
+    provideNgxElement(lazyConfig)
+  ]
+});
+```
+
+`loadComponent` lazy-loads a **standalone** component. `loadChildren` lazy-loads an **NgModule** that exposes the component to upgrade.
+
+### 1) Lazy-load a standalone component
+
+```
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-sponsor',
+  standalone: true,
+  templateUrl: './sponsor.component.html'
+})
+export class SponsorComponent {
+  @Input() image: string;
+  @Input() name: string;
+}
+```
+
+Register it with `loadComponent` as shown above. No NgModule wrapper is required.
+
+### 2) Lazy-load an NgModule (existing apps)
+
+Expose the Angular Component that should be loaded via a `customElementComponent` property.
+
+```
 @NgModule({
-  ...,
+  imports: [TalkComponent],
+  exports: [TalkComponent]
+})
+export class TalkModule {
+  customElementComponent: Type<any> = TalkComponent;
+}
+```
+
+You can still bootstrap with an NgModule instead of `createApplication`:
+
+```
+@NgModule({
   imports: [
-    ...,
+    BrowserModule,
     NgxElementModule.forRoot(lazyConfig)
-  ],
-  ...
+  ]
 })
 export class AppModule {
-  ...
   ngDoBootstrap() {}
 }
 ```
