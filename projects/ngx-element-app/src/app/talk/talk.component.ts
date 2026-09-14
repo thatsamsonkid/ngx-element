@@ -1,9 +1,10 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 @Component({
   selector: 'app-talk',
+  standalone: true,
   templateUrl: './talk.component.html',
-  styleUrls: ['./talk.component.scss']
+  styleUrl: './talk.component.scss'
 })
 export class TalkComponent implements OnInit {
   private _isTestMode = 'N';
@@ -16,7 +17,7 @@ export class TalkComponent implements OnInit {
     return this._isTestMode;
   }
 
-  private _title: string;
+  private _title = '';
   @Input() set title(value: string) {
     if (this._title !== value) {
       this._title = value;
@@ -29,7 +30,7 @@ export class TalkComponent implements OnInit {
     return this._title;
   }
 
-  private _description: string;
+  private _description = '';
   @Input() set description(value: string) {
     if (this._description !== value) {
       this._description = value;
@@ -42,7 +43,7 @@ export class TalkComponent implements OnInit {
     return this._description;
   }
 
-  private _speaker: string;
+  private _speaker = '';
   @Input() set speaker(value: string) {
     if (this._speaker !== value) {
       this._speaker = value;
@@ -55,7 +56,7 @@ export class TalkComponent implements OnInit {
     return this._speaker;
   }
 
-  private _tags: string;
+  private _tags = '';
   @Input() set tags(value: string) {
     if (this._tags !== value) {
       this._tags = value;
@@ -70,9 +71,7 @@ export class TalkComponent implements OnInit {
 
   @Output() tagClick = new EventEmitter<string>();
 
-  talkTags: string[];
-
-  constructor() {}
+  talkTags: string[] = [];
 
   ngOnInit(): void {
     this.talkTags = this.tags ? JSON.parse(this.tags) : [];
